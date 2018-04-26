@@ -1,0 +1,4 @@
+Source: adt
+Version: 0.3.0
+Description: An Instrumentation and logging library
+Build-Depends: fmt
