@@ -21,83 +21,31 @@ vcpkg_extract_source_archive(${ARCHIVE})
 
 vcpkg_apply_patches(
     SOURCE_PATH ${SOURCE_PATH}
-    PATCHES ${CMAKE_CURRENT_LIST_DIR}/fix_properties.patch ${CMAKE_CURRENT_LIST_DIR}/fix_charset.patch
+    PATCHES
+        ${CMAKE_CURRENT_LIST_DIR}/fix_properties.patch
+        ${CMAKE_CURRENT_LIST_DIR}/fix_charset.patch
+        ${CMAKE_CURRENT_LIST_DIR}/remove_export_macro.patch
 )
 
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/msvc_recommended_pragmas.h DESTINATION ${SOURCE_PATH}/MSVC_Net2013)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
 
-set(VS_PLATFORM ${VCPKG_TARGET_ARCHITECTURE})
-if(${VCPKG_TARGET_ARCHITECTURE} STREQUAL x86)
-    set(VS_PLATFORM "Win32")
-endif(${VCPKG_TARGET_ARCHITECTURE} STREQUAL x86)
-vcpkg_build_msbuild(
-    PROJECT_PATH ${SOURCE_PATH}/MSVC_Net2013/gtkmm.sln
-    TARGET gtkmm
-    PLATFORM ${VS_PLATFORM}
-    USE_VCPKG_INTEGRATION
-)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/gdkmmconfig.h.cmake DESTINATION ${SOURCE_PATH}/gdk)
 
-# Handle headers
-file(COPY ${SOURCE_PATH}/MSVC_Net2013/gdkmm/gdkmmconfig.h DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(COPY ${SOURCE_PATH}/gdk/gdkmm.h DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(
-    COPY
-    ${SOURCE_PATH}/gdk/gdkmm
-    DESTINATION ${CURRENT_PACKAGES_DIR}/include
-    FILES_MATCHING PATTERN *.h
-)
-file(COPY ${SOURCE_PATH}/MSVC_Net2013/gtkmm/gtkmmconfig.h DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(COPY ${SOURCE_PATH}/gtk/gtkmm.h DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(
-    COPY
-    ${SOURCE_PATH}/gtk/gtkmm
-    DESTINATION ${CURRENT_PACKAGES_DIR}/include
-    FILES_MATCHING PATTERN *.h
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/gtkmmconfig.h.cmake DESTINATION ${SOURCE_PATH}/gtk)
+
+vcpkg_configure_cmake(
+    SOURCE_PATH ${SOURCE_PATH}
+    PREFER_NINJA # Disable this option if project cannot be built with Ninja
+    # OPTIONS -DUSE_THIS_IN_ALL_BUILDS=1 -DUSE_THIS_TOO=2
+    # OPTIONS_RELEASE -DOPTIMIZE=1
+    # OPTIONS_DEBUG -DDEBUGGABLE=1
 )
 
-# Handle libraries
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Release/${VS_PLATFORM}/bin/gdkmm.dll
-    DESTINATION ${CURRENT_PACKAGES_DIR}/bin
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Release/${VS_PLATFORM}/bin/gdkmm.lib
-    DESTINATION ${CURRENT_PACKAGES_DIR}/lib
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Release/${VS_PLATFORM}/bin/gtkmm.dll
-    DESTINATION ${CURRENT_PACKAGES_DIR}/bin
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Release/${VS_PLATFORM}/bin/gtkmm.lib
-    DESTINATION ${CURRENT_PACKAGES_DIR}/lib
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Debug/${VS_PLATFORM}/bin/gdkmm.dll
-    DESTINATION ${CURRENT_PACKAGES_DIR}/debug/bin
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Debug/${VS_PLATFORM}/bin/gdkmm.lib
-    DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Debug/${VS_PLATFORM}/bin/gtkmm.dll
-    DESTINATION ${CURRENT_PACKAGES_DIR}/debug/bin
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Debug/${VS_PLATFORM}/bin/gtkmm.lib
-    DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib
-)
+vcpkg_install_cmake()
 
 vcpkg_copy_pdbs()
+
+file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
 
 # Handle copyright and readme
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/gtkmm RENAME copyright)
