@@ -19,57 +19,50 @@ vcpkg_download_distfile(ARCHIVE
 )
 vcpkg_extract_source_archive(${ARCHIVE})
 
-vcpkg_apply_patches(
-    SOURCE_PATH ${SOURCE_PATH}
-    PATCHES ${CMAKE_CURRENT_LIST_DIR}/fix_properties.patch ${CMAKE_CURRENT_LIST_DIR}/fix_charset.patch
-)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
 
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/msvc_recommended_pragmas.h DESTINATION ${SOURCE_PATH}/MSVC_Net2013)
-
-set(VS_PLATFORM ${VCPKG_TARGET_ARCHITECTURE})
-if(${VCPKG_TARGET_ARCHITECTURE} STREQUAL x86)
-    set(VS_PLATFORM "Win32")
-endif(${VCPKG_TARGET_ARCHITECTURE} STREQUAL x86)
-vcpkg_build_msbuild(
-    PROJECT_PATH ${SOURCE_PATH}/MSVC_Net2013/pangomm.sln
-    TARGET pangomm
-    PLATFORM ${VS_PLATFORM}
-    USE_VCPKG_INTEGRATION
-)
-
-# Handle headers
-file(COPY ${SOURCE_PATH}/MSVC_Net2013/pangomm/pangommconfig.h DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(COPY ${SOURCE_PATH}/pango/pangomm.h DESTINATION ${CURRENT_PACKAGES_DIR}/include)
 file(
-    COPY
-    ${SOURCE_PATH}/pango/pangomm
+    COPY ${CMAKE_CURRENT_LIST_DIR}/pangommconfig.h.cmakein
+    DESTINATION ${SOURCE_PATH}/pango
+)
+
+vcpkg_configure_cmake(
+    SOURCE_PATH ${SOURCE_PATH}
+    PREFER_NINJA # Disable this option if project cannot be built with Ninja
+    # OPTIONS -DUSE_THIS_IN_ALL_BUILDS=1 -DUSE_THIS_TOO=2
+    # OPTIONS_RELEASE -DOPTIMIZE=1
+    # OPTIONS_DEBUG -DDEBUGGABLE=1
+)
+
+vcpkg_install_cmake()
+
+vcpkg_copy_pdbs()
+
+set(PANGOMM_TARGET pangomm-1.4)
+
+# Move Headers
+file(
+    RENAME ${CURRENT_PACKAGES_DIR}/include/${PANGOMM_TARGET}/pangomm/
+    ${CURRENT_PACKAGES_DIR}/include/pangomm
+)
+
+file(
+    COPY ${CURRENT_PACKAGES_DIR}/include/${PANGOMM_TARGET}/
     DESTINATION ${CURRENT_PACKAGES_DIR}/include
     FILES_MATCHING PATTERN *.h
 )
 
-# Handle libraries
 file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Release/${VS_PLATFORM}/bin/pangomm.dll
-    DESTINATION ${CURRENT_PACKAGES_DIR}/bin
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Release/${VS_PLATFORM}/bin/pangomm.lib
-    DESTINATION ${CURRENT_PACKAGES_DIR}/lib
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Debug/${VS_PLATFORM}/bin/pangomm.dll
-    DESTINATION ${CURRENT_PACKAGES_DIR}/debug/bin
-)
-file(
-    COPY
-    ${SOURCE_PATH}/MSVC_Net2013/Debug/${VS_PLATFORM}/bin/pangomm.lib
-    DESTINATION ${CURRENT_PACKAGES_DIR}/debug/lib
+    RENAME ${CURRENT_PACKAGES_DIR}/lib/${PANGOMM_TARGET}/include/pangommconfig.h
+    ${CURRENT_PACKAGES_DIR}/include/pangommconfig.h
 )
 
-vcpkg_copy_pdbs()
+file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/lib/${PANGOMM_TARGET})
+
+file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/include/${PANGOMM_TARGET})
+
+file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
+
 
 # Handle copyright and readme
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/pangomm RENAME copyright)

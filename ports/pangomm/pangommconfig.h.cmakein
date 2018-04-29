@@ -1,0 +1,19 @@
+/* This file is part of pangomm. */
+#ifndef PANGOMM_PANGOMMCONFIG_H_INCLUDED
+#define PANGOMM_PANGOMMCONFIG_H_INCLUDED
+
+#include <glibmmconfig.h>
+
+/* Define to omit deprecated API from the library. */
+#cmakedefine PANGOMM_DISABLE_DEPRECATED
+
+/* Major version number of pangomm. */
+#define PANGOMM_MAJOR_VERSION @PANGOMM_VERSION_MAJOR@
+
+/* Minor version number of pangomm. */
+#define PANGOMM_MINOR_VERSION @PANGOMM_VERSION_MINOR@
+
+/* Micro version number of pangomm. */
+#define PANGOMM_MICRO_VERSION @PANGOMM_VERSION_MICRO@
+
+#endif /* !PANGOMM_PANGOMMCONFIG_H_INCLUDED */
