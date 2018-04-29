@@ -21,10 +21,7 @@ vcpkg_extract_source_archive(${ARCHIVE})
 
 vcpkg_apply_patches(
     SOURCE_PATH ${SOURCE_PATH}
-    PATCHES
-        ${CMAKE_CURRENT_LIST_DIR}/fix_properties.patch
-        ${CMAKE_CURRENT_LIST_DIR}/fix_charset.patch
-        ${CMAKE_CURRENT_LIST_DIR}/remove_export_macro.patch
+    PATCHES ${CMAKE_CURRENT_LIST_DIR}/remove_export_macro.patch
 )
 
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
