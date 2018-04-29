@@ -32,15 +32,27 @@ vcpkg_install_cmake()
 
 vcpkg_copy_pdbs()
 
+set(ADT_TARGET adt-0)
+
 # Handle copyright
 file(INSTALL ${SOURCE_PATH}/LICENSE.GPLv3 DESTINATION ${CURRENT_PACKAGES_DIR}/share/adt RENAME copyright)
 
-file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
+file(
+    RENAME ${CURRENT_PACKAGES_DIR}/include/${ADT_TARGET}/adt
+    ${CURRENT_PACKAGES_DIR}/include/adt
+)
 
-file(COPY ${CURRENT_PACKAGES_DIR}/include/adt-0/adt.hpp DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(COPY ${CURRENT_PACKAGES_DIR}/include/adt-0/adt-private.hpp DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(COPY ${CURRENT_PACKAGES_DIR}/include/adt-0/adt DESTINATION ${CURRENT_PACKAGES_DIR}/include)
-file(COPY ${CURRENT_PACKAGES_DIR}/include/adt-0/adt/private DESTINATION ${CURRENT_PACKAGES_DIR}/include/adt)
-file(COPY ${CURRENT_PACKAGES_DIR}/include/adt-0/moodycamel DESTINATION ${CURRENT_PACKAGES_DIR}/include/)
+file(
+    RENAME ${CURRENT_PACKAGES_DIR}/include/${ADT_TARGET}/moodycamel
+    ${CURRENT_PACKAGES_DIR}/include/moodycamel
+)
+
+file(
+    COPY ${CURRENT_PACKAGES_DIR}/include/${ADT_TARGET}/
+    DESTINATION ${CURRENT_PACKAGES_DIR}/include
+    FILES_MATCHING PATTERN *.h
+)
 
 file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/include/adt-0)
+
+file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
