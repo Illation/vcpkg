@@ -1,0 +1,32 @@
+install(
+    TARGETS ${ADT_TARGET}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+# Don't install pkg-config file
+
+if(INSTALL_HEADERS)
+    set(INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
+
+    install(
+        FILES ${ADT_HEADERS}
+        DESTINATION ${INSTALL_INCLUDEDIR}
+    )
+
+    install(
+        FILES ${ADT_SUBHEADERS}
+        DESTINATION ${INSTALL_INCLUDEDIR}/adt
+    )
+
+    install(
+        FILES ${ADT_PRIVATEHEADERS}
+        DESTINATION ${INSTALL_INCLUDEDIR}/adt/private
+    )
+
+    install(
+        FILES ${ADT_MOODYCAMELHEADERS}
+        DESTINATION ${INSTALL_INCLUDEDIR}/moodycamel
+    )
+endif()
