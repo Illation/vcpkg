@@ -13,6 +13,11 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
 endif()
 
 # find dependencies
+
+# adt
+find_path(ADT_INCLUDE_DIR adt-capi.h)
+find_library(ADT_LIBRARY adt-0)
+
 # glib
 find_path(GLIB_INCLUDE_DIR glib.h)
 find_library(GLIB_GLIB_LIBRARY glib-${GLIB_LIB_SUFFIX})
@@ -52,6 +57,7 @@ find_library(LIBINTL_LIBRARY NAMES intl libintl)
 set(GTK_REQUIRED_LIBRARIES
     ${LIBINTL_LIBRARY}
     ${EPOXY_LIBRARY}
+    ${ADT_LIBRARY}
     ${GLIB_LIBRARIES}
     ${CAIRO_LIBRARIES}
     ${PANGO_LIBRARIES}
@@ -61,6 +67,7 @@ set(GTK_REQUIRED_LIBRARIES
 set(GTK_REQUIRED_INCLUDE_DIR
     ${LIBINTL_INCLUDE_DIR}
     ${EPOXY_INCLUDE_DIR}
+    ${ADT_INCLUDE_DIR}
     ${GLIB_INCLUDE_DIR}
     ${GDK_PIXBUF_INCLUDE_DIR}
     ${CAIRO_INCLUDE_DIR}
