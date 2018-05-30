@@ -1,0 +1,452 @@
+diff --git a/gdk/gdk.c b/gdk/gdk.c
+index 22d7841..7b213de 100644
+--- a/gdk/gdk.c
++++ b/gdk/gdk.c
+@@ -287,6 +287,16 @@ gdk_ensure_resources (void)
+   g_once (&register_resources_once, register_resources, NULL);
+ }
+ 
++static void
++_gdk_init_adt_logging (void)
++{
++  LogGdkWindow = adt_log_get_category ("GdkWindow");
++  LogGdkFrameClock = adt_log_get_category ("GdkFrameClock");
++  LogGdkDraw = adt_log_get_category ("GdkDraw");
++  LogGdkEvents = adt_log_get_category ("GdkEvents");
++  LogGdkInput = adt_log_get_category ("GdkInput");
++}
++
+ void
+ gdk_pre_parse (void)
+ {
+@@ -463,6 +473,8 @@ gdk_display_open_default (void)
+   if (display)
+     return display;
+ 
++  _gdk_init_adt_logging();
++
+   display = gdk_display_open (gdk_get_display_arg_name ());
+ 
+   return display;
+diff --git a/gdk/gdkframeclock.c b/gdk/gdkframeclock.c
+index 8083682..f08159d 100644
+--- a/gdk/gdkframeclock.c
++++ b/gdk/gdkframeclock.c
+@@ -613,31 +613,41 @@ gdk_frame_clock_get_refresh_info (GdkFrameClock *frame_clock,
+ void
+ _gdk_frame_clock_emit_flush_events (GdkFrameClock *frame_clock)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
+   g_signal_emit (frame_clock, signals[FLUSH_EVENTS], 0);
++  A_LOG_CALL_END ();
+ }
+ 
+ void
+ _gdk_frame_clock_emit_before_paint (GdkFrameClock *frame_clock)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
+   g_signal_emit (frame_clock, signals[BEFORE_PAINT], 0);
++  A_LOG_CALL_END ();
+ }
+ 
+ void
+ _gdk_frame_clock_emit_update (GdkFrameClock *frame_clock)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
+   g_signal_emit (frame_clock, signals[UPDATE], 0);
++  A_LOG_CALL_END ();
+ }
+ 
+ void
+ _gdk_frame_clock_emit_layout (GdkFrameClock *frame_clock)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
+   g_signal_emit (frame_clock, signals[LAYOUT], 0);
++  A_LOG_CALL_END ();
+ }
+ 
+ void
+ _gdk_frame_clock_emit_paint (GdkFrameClock *frame_clock)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
+   g_signal_emit (frame_clock, signals[PAINT], 0);
++  A_LOG_CALL_END ();
+ }
+ 
+ void
+diff --git a/gdk/gdkframeclockidle.c b/gdk/gdkframeclockidle.c
+index 12897f4..11cec4c 100644
+--- a/gdk/gdkframeclockidle.c
++++ b/gdk/gdkframeclockidle.c
+@@ -221,6 +221,8 @@ gdk_frame_clock_idle_get_frame_time (GdkFrameClock *clock)
+ static void
+ maybe_start_idle (GdkFrameClockIdle *clock_idle)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
++
+   GdkFrameClockIdlePrivate *priv = clock_idle->priv;
+ 
+   if (RUN_FLUSH_IDLE (priv) || RUN_PAINT_IDLE (priv))
+@@ -255,11 +257,13 @@ maybe_start_idle (GdkFrameClockIdle *clock_idle)
+           g_source_set_name_by_id (priv->paint_idle_id, "[gtk+] gdk_frame_clock_paint_idle");
+         }
+     }
++  A_LOG_CALL_END ();
+ }
+ 
+ static void
+ maybe_stop_idle (GdkFrameClockIdle *clock_idle)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
+   GdkFrameClockIdlePrivate *priv = clock_idle->priv;
+ 
+   if (priv->flush_idle_id != 0 && !RUN_FLUSH_IDLE (priv))
+@@ -273,6 +277,7 @@ maybe_stop_idle (GdkFrameClockIdle *clock_idle)
+       g_source_remove (priv->paint_idle_id);
+       priv->paint_idle_id = 0;
+     }
++  A_LOG_CALL_END();
+ }
+ 
+ static gint64
+@@ -295,6 +300,8 @@ compute_min_next_frame_time (GdkFrameClockIdle *clock_idle,
+ static gboolean
+ gdk_frame_clock_flush_idle (void *data)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
++
+   GdkFrameClock *clock = GDK_FRAME_CLOCK (data);
+   GdkFrameClockIdle *clock_idle = GDK_FRAME_CLOCK_IDLE (clock);
+   GdkFrameClockIdlePrivate *priv = clock_idle->priv;
+@@ -302,6 +309,7 @@ gdk_frame_clock_flush_idle (void *data)
+   priv->flush_idle_id = 0;
+ 
+   if (priv->phase != GDK_FRAME_CLOCK_PHASE_NONE)
++    A_LOG_CALL_END();
+     return FALSE;
+ 
+   priv->phase = GDK_FRAME_CLOCK_PHASE_FLUSH_EVENTS;
+@@ -315,12 +323,16 @@ gdk_frame_clock_flush_idle (void *data)
+   else
+     priv->phase = GDK_FRAME_CLOCK_PHASE_NONE;
+ 
++  A_LOG_CALL_END();
++
+   return FALSE;
+ }
+ 
+ static gboolean
+ gdk_frame_clock_paint_idle (void *data)
+ {
++  A_LOG_CALL_BEGIN (LogGdkFrameClock);
++
+   GdkFrameClock *clock = GDK_FRAME_CLOCK (data);
+   GdkFrameClockIdle *clock_idle = GDK_FRAME_CLOCK_IDLE (clock);
+   GdkFrameClockIdlePrivate *priv = clock_idle->priv;
+@@ -484,6 +496,8 @@ gdk_frame_clock_paint_idle (void *data)
+   if (priv->freeze_count == 0)
+     priv->sleep_serial = get_sleep_serial ();
+ 
++  A_LOG_CALL_END ();
++
+   return FALSE;
+ }
+ 
+diff --git a/gdk/gdkglobals.c b/gdk/gdkglobals.c
+index 0bef8d7..a13a804 100644
+--- a/gdk/gdkglobals.c
++++ b/gdk/gdkglobals.c
+@@ -36,3 +36,9 @@ gchar              *_gdk_display_arg_name = NULL;
+ gboolean            _gdk_disable_multidevice = FALSE;
+ guint               _gdk_gl_flags = 0;
+ GdkRenderingMode    _gdk_rendering_mode = GDK_RENDERING_MODE_SIMILAR;
++
++log_category_t      *LogGdkWindow = NULL;
++log_category_t      *LogGdkFrameClock = NULL;
++log_category_t      *LogGdkDraw = NULL;
++log_category_t      *LogGdkEvents = NULL;
++log_category_t      *LogGdkInput = NULL;
+diff --git a/gdk/gdkinternals.h b/gdk/gdkinternals.h
+index 47d340b..a3415c7 100644
+--- a/gdk/gdkinternals.h
++++ b/gdk/gdkinternals.h
+@@ -27,6 +27,8 @@
+ #ifndef __GDK_INTERNALS_H__
+ #define __GDK_INTERNALS_H__
+ 
++#include <adt-capi.h>
++
+ #include <gio/gio.h>
+ #include "gdkwindowimpl.h"
+ #include "gdkdisplay.h"
+@@ -112,6 +114,12 @@ extern guint _gdk_gl_flags;
+ extern GdkRenderingMode    _gdk_rendering_mode;
+ extern gboolean _gdk_debug_updates;
+ 
++extern log_category_t *LogGdkWindow;
++extern log_category_t *LogGdkFrameClock;
++extern log_category_t *LogGdkDraw;
++extern log_category_t *LogGdkEvents;
++extern log_category_t *LogGdkInput;
++
+ #ifdef G_ENABLE_DEBUG
+ 
+ #define GDK_DEBUG_CHECK(type) G_UNLIKELY (_gdk_debug_flags & GDK_DEBUG_##type)
+diff --git a/gdk/gdkwindow.c b/gdk/gdkwindow.c
+index c0e0a7d..1fcb6ee 100644
+--- a/gdk/gdkwindow.c
++++ b/gdk/gdkwindow.c
+@@ -2925,6 +2925,8 @@ gdk_window_begin_paint_internal (GdkWindow            *window,
+       return;
+     }
+ 
++  A_LOG_CALL_BEGIN (LogGdkWindow);
++
+   impl_class = GDK_WINDOW_IMPL_GET_CLASS (window->impl);
+ 
+   needs_surface = TRUE;
+@@ -2995,6 +2997,8 @@ gdk_window_begin_paint_internal (GdkWindow            *window,
+ 
+   if (!cairo_region_is_empty (window->current_paint.region))
+     gdk_window_clear_backing_region (window);
++
++  A_LOG_CALL_END();
+ }
+ 
+ static void
+@@ -3015,6 +3019,8 @@ gdk_window_end_paint_internal (GdkWindow *window)
+       return;
+     }
+ 
++  A_LOG_CALL_BEGIN (LogGdkWindow);
++
+   impl_class = GDK_WINDOW_IMPL_GET_CLASS (window->impl);
+ 
+   if (impl_class->end_paint)
+@@ -3094,6 +3100,7 @@ gdk_window_end_paint_internal (GdkWindow *window)
+ 	  break;
+ 	}
+     }
++  A_LOG_CALL_END();
+ }
+ 
+ /**
+diff --git a/gtk/gtkcssgadget.c b/gtk/gtkcssgadget.c
+index 7d4ba9c..36cf572 100644
+--- a/gtk/gtkcssgadget.c
++++ b/gtk/gtkcssgadget.c
+@@ -828,6 +828,8 @@ gtk_css_gadget_draw (GtkCssGadget *gadget,
+   if (!gtk_css_gadget_get_visible (gadget))
+     return;
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++
+   gtk_css_gadget_get_margin_box (gadget, &margin_box);
+ 
+   x = margin_box.x;
+@@ -937,6 +939,7 @@ gtk_css_gadget_draw (GtkCssGadget *gadget,
+       }
+   }
+ #endif
++  A_LOG_CALL_END ();
+ }
+ 
+ void
+diff --git a/gtk/gtkmain.c b/gtk/gtkmain.c
+index af854ce..e8ae6de 100644
+--- a/gtk/gtkmain.c
++++ b/gtk/gtkmain.c
+@@ -193,6 +193,16 @@ static const GDebugKey gtk_debug_keys[] = {
+ };
+ #endif /* G_ENABLE_DEBUG */
+ 
++log_category_t      *LogGtkDraw = NULL;
++log_category_t      *LogGtkLayout = NULL;
++
++static void
++_gtk_init_adt_logging (void)
++{
++  LogGtkDraw = adt_log_get_category ("GtkDraw");
++  LogGtkLayout = adt_log_get_category ("GtkLayout");
++}
++
+ /**
+  * gtk_get_major_version:
+  *
+@@ -1102,6 +1112,8 @@ gtk_init_check (int    *argc,
+ 
+   ret = GDK_PRIVATE_CALL (gdk_display_open_default) () != NULL;
+ 
++  _gtk_init_adt_logging ();
++
+   if (gtk_get_debug_flags () & GTK_DEBUG_INTERACTIVE)
+     gtk_window_set_interactive_debugging (TRUE);
+ 
+diff --git a/gtk/gtkprivate.h b/gtk/gtkprivate.h
+index af130cd..769dffb 100644
+--- a/gtk/gtkprivate.h
++++ b/gtk/gtkprivate.h
+@@ -25,6 +25,8 @@
+ #ifndef __GTK_PRIVATE_H__
+ #define __GTK_PRIVATE_H__
+ 
++#include <adt-capi.h>
++
+ #include <glib-object.h>
+ #include <gdk/gdk.h>
+ 
+@@ -115,6 +117,9 @@ guint gtk_get_display_debug_flags (GdkDisplay *display);
+ 
+ #endif /* G_ENABLE_DEBUG */
+ 
++extern log_category_t *LogGtkDraw;
++extern log_category_t *LogGtkLayout;
++
+ G_END_DECLS
+ 
+ #endif /* __GTK_PRIVATE_H__ */
+diff --git a/gtk/gtktreeview.c b/gtk/gtktreeview.c
+index 73d3557..4c42a51 100644
+--- a/gtk/gtktreeview.c
++++ b/gtk/gtktreeview.c
+@@ -5627,6 +5627,8 @@ static gboolean
+ gtk_tree_view_draw (GtkWidget *widget,
+                     cairo_t   *cr)
+ {
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++
+   GtkTreeView *tree_view = GTK_TREE_VIEW (widget);
+   GtkWidget   *button;
+   GtkStyleContext *context;
+@@ -5719,6 +5721,8 @@ gtk_tree_view_draw (GtkWidget *widget,
+ 
+   gtk_style_context_restore (context);
+ 
++  A_LOG_CALL_END ();
++
+   return FALSE;
+ }
+ 
+diff --git a/gtk/gtkwidget.c b/gtk/gtkwidget.c
+index 7597d05..c0f8eb3 100644
+--- a/gtk/gtkwidget.c
++++ b/gtk/gtkwidget.c
+@@ -5573,7 +5573,12 @@ gtk_widget_queue_draw_region (GtkWidget            *widget,
+     if (!_gtk_widget_get_mapped (w))
+       return;
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++  A_LOG_CALL_ADD_STRING_PROPERTY (gtk_widget_get_name (widget));
++
+   WIDGET_CLASS (widget)->queue_draw_region (widget, region);
++
++  A_LOG_CALL_END ();
+ }
+ 
+ /**
+@@ -5613,6 +5618,9 @@ gtk_widget_queue_draw_area (GtkWidget *widget,
+   if (width == 0 || height == 0)
+     return;
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++  A_LOG_CALL_ADD_STRING_PROPERTY (gtk_widget_get_name (widget));
++
+   rect.x = x;
+   rect.y = y;
+   rect.width = width;
+@@ -5621,6 +5629,8 @@ gtk_widget_queue_draw_area (GtkWidget *widget,
+   region = cairo_region_create_rectangle (&rect);
+   gtk_widget_queue_draw_region (widget, region);
+   cairo_region_destroy (region);
++
++  A_LOG_CALL_END ();
+ }
+ 
+ /**
+@@ -5637,6 +5647,9 @@ gtk_widget_queue_draw (GtkWidget *widget)
+ 
+   g_return_if_fail (GTK_IS_WIDGET (widget));
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++  A_LOG_CALL_ADD_STRING_PROPERTY (gtk_widget_get_name (widget));
++
+   gtk_widget_get_clip (widget, &rect);
+ 
+   if (!_gtk_widget_get_has_window (widget))
+@@ -5645,6 +5658,7 @@ gtk_widget_queue_draw (GtkWidget *widget)
+   else
+     gtk_widget_queue_draw_area (widget,
+                                 0, 0, rect.width, rect.height);
++  A_LOG_CALL_END ();
+ }
+ 
+ static void
+@@ -5741,10 +5755,15 @@ gtk_widget_queue_resize (GtkWidget *widget)
+ {
+   g_return_if_fail (GTK_IS_WIDGET (widget));
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++  A_LOG_CALL_ADD_STRING_PROPERTY (gtk_widget_get_name (widget));
++
+   if (_gtk_widget_get_realized (widget))
+     gtk_widget_queue_draw (widget);
+ 
+   gtk_widget_queue_resize_internal (widget);
++
++  A_LOG_CALL_END ();
+ }
+ 
+ /**
+@@ -5759,9 +5778,15 @@ gtk_widget_queue_resize (GtkWidget *widget)
+ void
+ gtk_widget_queue_resize_no_redraw (GtkWidget *widget)
+ {
++
+   g_return_if_fail (GTK_IS_WIDGET (widget));
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++  A_LOG_CALL_ADD_STRING_PROPERTY (gtk_widget_get_name (widget));
++
+   gtk_widget_queue_resize_internal (widget);
++
++  A_LOG_CALL_END ();
+ }
+ 
+ /**
+@@ -6959,6 +6984,9 @@ gtk_widget_draw_internal (GtkWidget *widget,
+   if (!_gtk_widget_is_drawable (widget))
+     return;
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++  A_LOG_CALL_ADD_STRING_PROPERTY (gtk_widget_get_name (widget));
++
+   if (clip_to_size)
+     {
+       cairo_rectangle (cr,
+@@ -7071,6 +7099,7 @@ gtk_widget_draw_internal (GtkWidget *widget,
+                      cairo_status_to_string (cairo_status (cr)));
+         }
+     }
++  A_LOG_CALL_END ();
+ }
+ 
+ /**
+@@ -7110,6 +7139,9 @@ gtk_widget_draw (GtkWidget *widget,
+   g_return_if_fail (!widget->priv->alloc_needed_on_child);
+   g_return_if_fail (cr != NULL);
+ 
++  A_LOG_CALL_BEGIN (LogGtkDraw);
++  A_LOG_CALL_ADD_STRING_PROPERTY (gtk_widget_get_name (widget));
++
+   cairo_save (cr);
+ 
+   was_marked = gtk_cairo_is_marked_for_draw (cr);
+@@ -7124,6 +7156,8 @@ gtk_widget_draw (GtkWidget *widget,
+   gtk_cairo_set_marked_for_draw (cr, was_marked);
+ 
+   cairo_restore (cr);
++
++  A_LOG_CALL_END ();
+ }
+ 
+ static gboolean
