@@ -11,11 +11,11 @@
 #
 
 include(vcpkg_common_functions)
-set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/adt-0.5.0)
+set(SOURCE_PATH ${CURRENT_BUILDTREES_DIR}/src/adt-0.6.0)
 vcpkg_download_distfile(ARCHIVE
-    URLS "https://gitlab.com/mojofunk/adt/-/archive/0.5.0/adt-0.5.0.tar.gz"
-    FILENAME "adt-0.5.0.tar.gz"
-    SHA512 853fb6c7ffd3ab43778378b330d7865bc78db97ecf4c6efddab122cc8eb03eec106881c6d932af989218a841c8f5bc4e4761c53eb1d52e07b26e0cfb1deaab02
+    URLS "https://gitlab.com/mojofunk/adt/-/archive/0.6.0/adt-0.6.0.tar.gz"
+    FILENAME "adt-0.6.0.tar.gz"
+    SHA512 1a8e1b7691487504b47a2f7d8fdc9484fa5962b510117bf18f5f122f0c861166883e154cabfeaa856d59a52f3c58308d5bcc48be2ad1b11299cef3959f7c5e02
 )
 
 vcpkg_extract_source_archive(${ARCHIVE})

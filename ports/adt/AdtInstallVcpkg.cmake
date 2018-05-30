@@ -11,7 +11,7 @@ if(INSTALL_HEADERS)
     set(INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
 
     install(
-        FILES ${ADT_HEADERS}
+        FILES ${ADT_HEADER} ${ADT_C_HEADER}
         DESTINATION ${INSTALL_INCLUDEDIR}
     )
 
@@ -20,13 +20,4 @@ if(INSTALL_HEADERS)
         DESTINATION ${INSTALL_INCLUDEDIR}/adt
     )
 
-    install(
-        FILES ${ADT_PRIVATEHEADERS}
-        DESTINATION ${INSTALL_INCLUDEDIR}/adt/private
-    )
-
-    install(
-        FILES ${ADT_MOODYCAMELHEADERS}
-        DESTINATION ${INSTALL_INCLUDEDIR}/moodycamel
-    )
 endif()
