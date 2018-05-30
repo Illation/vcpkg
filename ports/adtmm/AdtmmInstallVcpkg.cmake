@@ -1,0 +1,23 @@
+install(
+    TARGETS ${ADTMM_TARGET}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+# Don't install pkg-config file
+
+if(INSTALL_HEADERS)
+    set(INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
+
+    install(
+        FILES ${ADTMM_HEADER}
+        DESTINATION ${INSTALL_INCLUDEDIR}
+    )
+
+    install(
+        FILES ${ADTMM_SUBHEADERS}
+        DESTINATION ${INSTALL_INCLUDEDIR}/adtmm
+    )
+
+endif()
