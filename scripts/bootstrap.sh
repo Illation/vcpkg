@@ -1,5 +1,16 @@
 #!/bin/sh
 
+vcpkgDisableMetrics="OFF"
+for var in "$@"
+do
+    if [ "$var" = "-disableMetrics" ]; then
+        vcpkgDisableMetrics="ON"
+    else
+        echo "Unknown argument $var"
+        exit 1
+    fi
+done
+
 # Find vcpkg-root
 vcpkgRootDir=$(X= cd -- "$(dirname -- "$0")" && pwd -P)
 while [ "$vcpkgRootDir" != "/" ] && ! [ -e "$vcpkgRootDir/.vcpkg-root" ]; do
@@ -30,7 +41,14 @@ vcpkgCheckEqualFileHash()
 {
     url=$1; filePath=$2; expectedHash=$3
 
-    actualHash=$(shasum -a 512 "$filePath") # sha512sum not available on osx
+    if command -v "sha512sum" >/dev/null 2>&1 ; then
+        actualHash=$(sha512sum "$filePath")
+    else
+        # sha512sum is not available by default on osx
+        # shasum is not available by default on Fedora
+        actualHash=$(shasum -a 512 "$filePath")
+    fi
+
     actualHash="${actualHash%% *}" # shasum returns [hash filename], so get the first word
 
     if ! [ "$expectedHash" = "$actualHash" ]; then
@@ -90,7 +108,7 @@ fetchTool()
         return 1
     fi
 
-    xmlFileAsString=`cat $vcpkgRootDir/scripts/vcpkgTools.xml`
+    xmlFileAsString=`cat "$vcpkgRootDir/scripts/vcpkgTools.xml"`
     toolRegexStart="<tool name=\"$tool\" os=\"$os\">"
     toolData="$(extractStringBetweenDelimiters "$xmlFileAsString" "$toolRegexStart" "</tool>")"
     if [ "$toolData" = "" ]; then
@@ -150,7 +168,9 @@ selectCXX()
 
     if [ "x$CXX" = "x" ]; then
         CXX=g++
-        if which g++-7 >/dev/null 2>&1; then
+        if which g++-8 >/dev/null 2>&1; then
+            CXX=g++-8
+        elif which g++-7 >/dev/null 2>&1; then
             CXX=g++-7
         elif which g++-6 >/dev/null 2>&1; then
             CXX=g++-6
@@ -159,7 +179,7 @@ selectCXX()
 
     gccversion="$("$CXX" -v 2>&1)"
     gccversion="$(extractStringBetweenDelimiters "$gccversion" "gcc version " ".")"
-    if [ "$gccversion" = "5" ]; then
+    if [ "$gccversion" -lt "6" ]; then
         echo "CXX ($CXX) is too old; please install a newer compiler such as g++-7."
         echo "sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y"
         echo "sudo apt-get update -y"
@@ -181,7 +201,7 @@ buildDir="$vcpkgRootDir/toolsrc/build.rel"
 rm -rf "$buildDir"
 mkdir -p "$buildDir"
 
-(cd "$buildDir" && CXX=$CXX "$cmakeExe" .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" "-DCMAKE_MAKE_PROGRAM=$ninjaExe")
+(cd "$buildDir" && CXX=$CXX "$cmakeExe" .. -DCMAKE_BUILD_TYPE=Release -G "Ninja" "-DCMAKE_MAKE_PROGRAM=$ninjaExe" "-DDEFINE_DISABLE_METRICS=$vcpkgDisableMetrics")
 (cd "$buildDir" && "$cmakeExe" --build .)
 
 rm -rf "$vcpkgRootDir/vcpkg"
