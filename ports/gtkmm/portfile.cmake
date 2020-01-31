@@ -21,31 +21,35 @@ vcpkg_extract_source_archive(${ARCHIVE})
 
 vcpkg_apply_patches(
     SOURCE_PATH ${SOURCE_PATH}
-    PATCHES
-        ${CMAKE_CURRENT_LIST_DIR}/fix_properties.patch
-        ${CMAKE_CURRENT_LIST_DIR}/fix_charset.patch
-        ${CMAKE_CURRENT_LIST_DIR}/remove_export_macro.patch
+    PATCHES ${CMAKE_CURRENT_LIST_DIR}/remove_export_macro.patch
 )
 
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeLists.txt DESTINATION ${SOURCE_PATH})
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/CMakeScripts DESTINATION ${SOURCE_PATH})
 
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/gdkmmconfig.h.cmake DESTINATION ${SOURCE_PATH}/gdk)
+# Override the default dependencies
+file(
+    RENAME ${SOURCE_PATH}/CMakeScripts/GtkmmDependenciesVcpkg.cmake
+    ${SOURCE_PATH}/CMakeScripts/GtkmmDependencies.cmake
+)
 
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/gtkmmconfig.h.cmake DESTINATION ${SOURCE_PATH}/gtk)
+# Override the default install
+file(
+    RENAME ${SOURCE_PATH}/CMakeScripts/GtkmmInstallVcpkg.cmake
+    ${SOURCE_PATH}/CMakeScripts/GtkmmInstall.cmake
+)
 
 vcpkg_configure_cmake(
     SOURCE_PATH ${SOURCE_PATH}
     PREFER_NINJA # Disable this option if project cannot be built with Ninja
     # OPTIONS -DUSE_THIS_IN_ALL_BUILDS=1 -DUSE_THIS_TOO=2
     # OPTIONS_RELEASE -DOPTIMIZE=1
-    # OPTIONS_DEBUG -DDEBUGGABLE=1
+    OPTIONS_DEBUG -DINSTALL_HEADERS=OFF
 )
 
 vcpkg_install_cmake()
 
 vcpkg_copy_pdbs()
-
-file(REMOVE_RECURSE ${CURRENT_PACKAGES_DIR}/debug/include)
 
 # Handle copyright and readme
 file(INSTALL ${SOURCE_PATH}/COPYING DESTINATION ${CURRENT_PACKAGES_DIR}/share/gtkmm RENAME copyright)
