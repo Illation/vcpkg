@@ -1,0 +1,4 @@
+Source: adtmm
+Version: 0.2.0
+Description: A gtkmm based GUI for the adt library
+Build-Depends: adt, gtkmm
