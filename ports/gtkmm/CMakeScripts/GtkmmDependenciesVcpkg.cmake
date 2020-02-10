@@ -15,9 +15,13 @@ find_library(GTK_LIBRARIES gtk-3.0)
 find_library(SIGC_LIBRARIES sigc-2.0)
 find_library(GIOMM_LIBRARIES giomm)
 find_library(GLIBMM_LIBRARIES glibmm)
-find_library(CAIRO_LIBRARIES cairo)
 find_library(CAIROMM_LIBRARIES cairomm-1.0)
 find_library(PANGOMM_LIBRARIES pangomm)
+
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(CAIRO_LIB_SUFFIX d)
+endif()
+find_library(CAIRO_LIBRARY cairo${CAIRO_LIB_SUFFIX})
 
 set(GDKMM_REQUIRED_LIBRARIES
     ${GLIB_LIBRARIES}
@@ -30,7 +34,6 @@ set(GDKMM_REQUIRED_LIBRARIES
     ${SIGC_LIBRARIES}
     ${GIOMM_LIBRARIES}
     ${GLIBMM_LIBRARIES}
-    ${CAIRO_LIBRARIES}
     ${CAIROMM_LIBRARIES}
     ${PANGOMM_LIBRARIES}
 )
