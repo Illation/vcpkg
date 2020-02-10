@@ -63,8 +63,9 @@ endif()
 target_include_directories(${GDKMM_TARGET} PUBLIC gdk ${GDKMM_REQUIRED_INCLUDE_DIRS})
 target_include_directories(${GTKMM_TARGET} PUBLIC gtk)
 
-target_link_libraries(${GDKMM_TARGET} PUBLIC ${GDKMM_REQUIRED_LIBRARIES})
-target_link_libraries(${GTKMM_TARGET} PUBLIC ${GTKMM_REQUIRED_LIBRARIES})
+target_link_libraries(${GDKMM_TARGET} PRIVATE ${CAIRO_LIBRARY} ${GDKMM_REQUIRED_LIBRARIES})
+target_link_libraries(${GTKMM_TARGET} PRIVATE ${CAIRO_LIBRARY} ${GTKMM_REQUIRED_LIBRARIES} ${GDKMM_REQUIRED_LIBRARIES})
+
 
 # TODO demo
 

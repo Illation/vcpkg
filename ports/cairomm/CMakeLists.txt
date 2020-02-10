@@ -85,6 +85,11 @@ set(cairomm_private_h
 
 set(cairomm_rc
     ${CMAKE_BINARY_DIR}/cairomm.rc)
+	
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+    set(CAIRO_LIB_SUFFIX d)
+endif()
+find_library(CAIRO_LIBRARY cairo${CAIRO_LIB_SUFFIX})
 
 add_library(cairomm-1.0 ${cairomm_cc} ${cairomm_rc})
 target_link_libraries(cairomm-1.0 ${CAIRO_LIBRARY} ${SIGC++_LIBRARY} )
